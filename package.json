@@ -1,5 +1,6 @@
 {
-    "name": "kvint-ess",
+    "name": "brc-ess",
+    "description": "Excise Stamp Scanning",
     "version": "0.1.0",
     "private": true,
     "scripts": {
