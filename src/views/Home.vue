@@ -143,7 +143,7 @@ export default {
 </script>
 
 <style>
-	html,
+html,
 body {
   margin: 0;
   padding: 0;
@@ -185,10 +185,6 @@ input[type="checkbox"] {
   outline: none;
 }
 
-.hidden {
-  display: none;
-}
-
 #app {
   background: #fff;
   margin: 200px 0 40px 0;
@@ -216,7 +212,6 @@ input[type="checkbox"] {
 }
 
 #app h1 {
-    
   position: absolute;
   top: -130px;
   width: 100%;
@@ -268,31 +263,6 @@ input[type="checkbox"] {
   position: relative;
   z-index: 2;
   border-top: 1px solid #e6e6e6;
-}
-
-label[for='toggle-all'] {
-  display: none;
-}
-
-.toggle-all {
-  position: absolute;
-  top: -55px;
-  left: -12px;
-  width: 60px;
-  height: 34px;
-  text-align: center;
-  border: none;
-}
-
-.toggle-all:before {
-  content: 'вќЇ';
-  font-size: 22px;
-  color: #e6e6e6;
-  padding: 10px 27px 10px 27px;
-}
-
-.toggle-all:checked:before {
-  color: #737373;
 }
 
 .code-list {
@@ -421,11 +391,6 @@ label[for='toggle-all'] {
               0 17px 2px -6px rgba(0, 0, 0, 0.2);
 }
 
-.code-count {
-  text-align: left;
-    color: #000;
-}
-
 .filters {
   margin: 0;
   padding: 0;
@@ -455,41 +420,5 @@ label[for='toggle-all'] {
 
 .filters li a.selected {
   border-color: rgba(175, 47, 47, 0.2);
-}
-
-.clear-completed,
-html .clear-completed:active {
-  float: right;
-  position: relative;
-  line-height: 20px;
-  text-decoration: none;
-  cursor: pointer;
-  position: relative;
-}
-
-.clear-completed:hover {
-  text-decoration: underline;
-}
-
-.info {
-  margin: 65px auto 0;
-  color: #bfbfbf;
-  font-size: 10px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-  text-align: center;
-}
-
-.info p {
-  line-height: 1;
-}
-
-.info a {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 400;
-}
-
-.info a:hover {
-  text-decoration: underline;
 }
 </style>
