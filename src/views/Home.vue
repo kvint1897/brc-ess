@@ -7,7 +7,7 @@
             <input ref="code" class="new-code"
                    v-model="newCode"
                    v-on:keyup.enter="addCode"
-                   placeholder="Просканируйте акцизную марку">
+                   placeholder="Просканируйте акцизную марку" autofocus>
             <ul class="code-list">
                 <li v-for="(code, index) in filteredCodes"
                     :key="index"
@@ -29,6 +29,8 @@
 <script>
 const STORAGE_KEY = 'excise-codes'
 const API_URL = 'http://web.kvint.md/brc/api.php'
+const START_CODE = 'Digit4'
+const END_CODE = 'Enter'
 import axios from 'axios'
 export default {
     name: 'home',
@@ -37,16 +39,19 @@ export default {
             newCode: '',
             codes: [],
             total: 111,
+            buffer: '',
+            isTrace: false,
             editedCode: null,
             visibility: 'all'
         }
     },
     created() {
         let self = this;
-        window.addEventListener('keyup', function (e) {
-            self.$nextTick(() => {
-                self.$refs.code.focus()
-            })
+        window.addEventListener('keydown', function (e) {
+            self.scanKeyboard(e);
+            // self.$nextTick(() => {
+            //     self.$refs.code.focus()
+            // })
         }, true);
         this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     },
@@ -72,6 +77,26 @@ export default {
 
     },
     methods: {
+        scanKeyboard(e) {
+            // console.log(this.isTrace, this.buffer, e)
+            if(e.code === START_CODE && e.shiftKey && !this.isTrace) {
+                this.isTrace = true
+                return
+            }
+            if(!this.isTrace) {
+                return
+            }
+            if(e.code === END_CODE) {
+                this.newCode = this.buffer
+                this.addCode()
+                this.buffer = ''
+                this.isTrace = false
+                return
+
+            } else {
+                this.buffer += e.key
+            }
+        },
         send() {
             if(this.count === 0){
                 return
@@ -96,7 +121,7 @@ export default {
             });
         },
         addCode() {
-            var test = this.newCode.match(/[^-]+-([0-9]{11})[0-9]+?/);
+            var test = this.newCode.match(/[^-]{3}-([0-9]{11})[0-9]+?/);
             this.newCode = '';
             if (!test) {
                 return;
@@ -217,6 +242,7 @@ body {
   background: #fff;
   padding: 16px 16px 16px 60px;
   border: none;
+  border-bottom: 2px solid #aaa;
   /*background: rgba(0, 0, 0, 0.003);*/
   box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
   &::-webkit-input-placeholder {
@@ -235,9 +261,10 @@ main {
 }
 
 .code-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .code-list li {
