@@ -1,28 +1,39 @@
 <template>
     <main>
-            <div class="title">
+            <div class="spec">
+                <input class="textbox"
+                    placeholder="Введите № спецификации"
+                    v-model.trim.lazy="spec"
+                    :readonly="isWork"
+                    :class="{ readonly: isWork }"
+                    @dblclick="spec = ''"
+                    autofocus />
+            </div>
+            <div v-if="isWork" class="counters">
                 <button class="send" title="Отправить на сервер" @click="send">{{ count }}</button>
                 <div v-if="total>0" class="total">∑{{ total }}</div>
             </div>
-            <input ref="code" class="new-code"
-                   v-model="newCode"
-                   v-on:keyup.enter="addCode"
-                   placeholder="Просканируйте акцизную марку" autofocus>
-            <ul class="code-list">
-                <li v-for="(code, index) in filteredCodes"
-                    :key="index"
-                    :class="{ completed: code.completed, editing: code == editedCode}">
-                    <div class="view">
-                        <label @dblclick="editCode(code)">{{ code.title }}</label>
-                        <button class="destroy" @click="removeCode(code)"></button>
-                    </div>
-                    <input class="edit" type="text"
-                        v-model="code.title"
-                        @blur="doneEdit(code)"
-                        @keyup.enter="doneEdit(code)" />
-                </li>
-            </ul>
-            <ul class="code-list"></ul>
+            <div v-if="isWork">
+                <input ref="code" class="textbox"
+                       v-model="newCode"
+                       v-on:keyup.enter="addCode"
+                       placeholder="Просканируйте акцизную марку" />
+                <ul class="code-list">
+                    <li v-for="(code, index) in filteredCodes"
+                        :key="index"
+                        :class="{ completed: code.completed, editing: code == editedCode}">
+                        <div class="view">
+                            <label @dblclick="editCode(code)">{{ code.title }}</label>
+                            <button class="destroy" @click="removeCode(code)"></button>
+                        </div>
+                        <input class="edit" type="text"
+                            v-model="code.title"
+                            @blur="doneEdit(code)"
+                            @keyup.enter="doneEdit(code)" />
+                    </li>
+                </ul>
+                <ul class="code-list"></ul>
+            </div>
     </main>
 </template>
 
@@ -31,16 +42,19 @@ const STORAGE_KEY = 'excise-codes'
 const API_URL = 'http://web.kvint.md/brc/api.php'
 const START_CODE = 'Digit4'
 const END_CODE = 'Enter'
+
 import axios from 'axios'
+
 export default {
     name: 'home',
     data() {
         return {
             newCode: '',
             codes: [],
-            total: 111,
+            total: 0,
             buffer: '',
             isTrace: false,
+            spec: '',
             editedCode: null,
             visibility: 'all'
         }
@@ -56,6 +70,9 @@ export default {
         this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     },
     computed: {
+        isWork() {
+            return this.spec !== ''
+        },
         count() {
             return this.codes.length;
         },
@@ -78,14 +95,12 @@ export default {
     },
     methods: {
         scanKeyboard(e) {
-            // console.log(this.isTrace, this.buffer, e)
+            if (!this.isWork) return
             if(e.code === START_CODE && e.shiftKey && !this.isTrace) {
                 this.isTrace = true
                 return
             }
-            if(!this.isTrace) {
-                return
-            }
+            if(!this.isTrace) return
             if(e.code === END_CODE) {
                 this.newCode = this.buffer
                 this.addCode()
@@ -98,16 +113,14 @@ export default {
             }
         },
         send() {
-            if(this.count === 0){
-                return
-            }
+            this.$refs.code.focus()
+            if(this.count === 0) return
             axios.post(API_URL, {
-                codes: this.codes
-            }, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            })
+                    action: 'addCodes',
+                    codes: this.codes,
+                    spec: this.spec
+                }, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+            )
             .then(response => {
                 if (response.data.status == 'ok') {
                     this.codes = []
@@ -166,13 +179,30 @@ export default {
 <style lang="less">
 html,
 body {
-  margin: 0;
-  padding: 0;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #f5f5f5;
+    color: #4d4d4d;
+    margin: 0 auto;
+    font-smoothing: antialiased;
+    font-weight: 300;
 }
 
 nav {
     margin: 20px auto;
     text-align: center;
+}
+
+main {
+    margin: 40px auto;
+    min-width: 230px;
+    max-width: 640px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
+              0 25px 50px 0 rgba(0, 0, 0, 0.1);
 }
 
 .destroy {
@@ -188,17 +218,7 @@ nav {
   outline: none;
 }
 
-body {
-  font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: #f5f5f5;
-  color: #4d4d4d;
-  margin: 0 auto;
-  font-smoothing: antialiased;
-  font-weight: 300;
-}
-
-
-.title {
+.counters {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -220,7 +240,7 @@ body {
 .total {
     color: green;
 }
-.new-code,
+.textbox,
 .edit {
   margin: 0;
   width: 100%;
@@ -238,60 +258,105 @@ body {
   font-smoothing: antialiased;
 }
 
-.new-code {
-  background: #fff;
-  padding: 16px 16px 16px 60px;
-  border: none;
-  border-bottom: 2px solid #aaa;
-  /*background: rgba(0, 0, 0, 0.003);*/
-  box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
-  &::-webkit-input-placeholder {
-    font-style: italic;
-    font-weight: 300;
-    color: #e6e6e6;
-  }
+.textbox {
+    padding: 16px;
+    border: none;
+    border-bottom: 2px solid #aaa;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
+    &::-webkit-input-placeholder {
+        font-style: italic;
+        font-weight: 300;
+        color: #e6e6e6;
+    }
 }
 
-main {
-    margin: 100px auto 40px auto;
-    min-width: 230px;
-    max-width: 640px;
-    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
-              0 25px 50px 0 rgba(0, 0, 0, 0.1);
+.readonly {
+    background-color: #aaa;
+    text-align: center;
 }
 
 .code-list {
-    background: #fff;
     margin: 0;
     padding: 0;
     list-style: none;
+    li {
+        position: relative;
+        font-size: 24px;
+        border-bottom: 1px solid #ededed;
+    }
+
+    li:last-child {
+        border-bottom: none;
+    }
+
+    li.editing {
+        border-bottom: none;
+        padding: 0;
+    }
+
+    li.editing .edit {
+        display: block;
+        width: 506px;
+        padding: 13px 17px 12px 17px;
+        margin: 0 0 0 43px;
+    }
+
+    li.editing .view {
+        display: none;
+    }
+    li label {
+        white-space: pre-line;
+        word-break: break-all;
+        padding: 15px 60px 15px 15px;
+        margin-left: 45px;
+        display: block;
+        line-height: 1.2;
+        transition: color 0.4s;
+    }
+
+    li.completed label {
+        color: #d9d9d9;
+        text-decoration: line-through;
+    }
+
+    li .destroy {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 10px;
+        bottom: 0;
+        width: 40px;
+        height: 40px;
+        margin: auto 0;
+        font-size: 30px;
+        color: #cc9a9a;
+        margin-bottom: 11px;
+        transition: color 0.2s ease-out;
+    }
+
+    li .destroy:hover {
+        color: #af5b5e;
+    }
+
+    li .destroy:after {
+        content:  '\d7';
+    }
+
+    li:hover .destroy {
+        display: block;
+    }
+
+    li .edit {
+        display: none;
+    }
+
+    li.editing:last-child {
+        margin-bottom: -1px;
+    }
 }
 
-.code-list li {
-  position: relative;
-  font-size: 24px;
-  border-bottom: 1px solid #ededed;
-}
 
-.code-list li:last-child {
-  border-bottom: none;
-}
-
-.code-list li.editing {
-  border-bottom: none;
-  padding: 0;
-}
-
-.code-list li.editing .edit {
-  display: block;
-  width: 506px;
-  padding: 13px 17px 12px 17px;
-  margin: 0 0 0 43px;
-}
-
-.code-list li.editing .view {
-  display: none;
-}
 
 /*.code-list li .toggle {
   text-align: center;
@@ -313,56 +378,6 @@ main {
 .code-list li .toggle:checked:after {
   content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -18 100 135"><circle cx="50" cy="50" r="50" fill="none" stroke="%23bddad5" stroke-width="3"/><path fill="%235dc2af" d="M72 25L42 71 27 56l-4 4 20 20 34-52z"/></svg>');
 }*/
-
-.code-list li label {
-  white-space: pre-line;
-  word-break: break-all;
-  padding: 15px 60px 15px 15px;
-  margin-left: 45px;
-  display: block;
-  line-height: 1.2;
-  transition: color 0.4s;
-}
-
-.code-list li.completed label {
-  color: #d9d9d9;
-  text-decoration: line-through;
-}
-
-.code-list li .destroy {
-  display: none;
-  position: absolute;
-  top: 0;
-  right: 10px;
-  bottom: 0;
-  width: 40px;
-  height: 40px;
-  margin: auto 0;
-  font-size: 30px;
-  color: #cc9a9a;
-  margin-bottom: 11px;
-  transition: color 0.2s ease-out;
-}
-
-.code-list li .destroy:hover {
-  color: #af5b5e;
-}
-
-.code-list li .destroy:after {
-  content:  '\d7';
-}
-
-.code-list li:hover .destroy {
-  display: block;
-}
-
-.code-list li .edit {
-  display: none;
-}
-
-.code-list li.editing:last-child {
-  margin-bottom: -1px;
-}
 
 .footer {
   color: #777;
