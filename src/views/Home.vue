@@ -1,16 +1,13 @@
 <template>
     <main>
-        <header>
-            <h1>
-                <span class="send" title="Отправить на сервер" @click="send">{{ count }}</span>
-                <span v-if="total>0" class="total">∑{{ total }}</span>
-            </h1>
+            <div class="title">
+                <button class="send" title="Отправить на сервер" @click="send">{{ count }}</button>
+                <div v-if="total>0" class="total">∑{{ total }}</div>
+            </div>
             <input ref="code" class="new-code"
                    v-model="newCode"
                    v-on:keyup.enter="addCode"
                    placeholder="Просканируйте акцизную марку">
-        </header>
-        <section class="main">
             <ul class="code-list">
                 <li v-for="(code, index) in filteredCodes"
                     :key="index"
@@ -26,13 +23,12 @@
                 </li>
             </ul>
             <ul class="code-list"></ul>
-        </section>
     </main>
 </template>
 
 <script>
 const STORAGE_KEY = 'excise-codes'
-const API_URL = 'http://web.kvint.md/brc/'
+const API_URL = 'http://web.kvint.md/brc/api.php'
 import axios from 'axios'
 export default {
     name: 'home',
@@ -40,19 +36,19 @@ export default {
         return {
             newCode: '',
             codes: [],
-            total: 0,
+            total: 111,
             editedCode: null,
             visibility: 'all'
         }
     },
     created() {
         let self = this;
-        window.addEventListener('keyup', function () {
+        window.addEventListener('keyup', function (e) {
             self.$nextTick(() => {
                 self.$refs.code.focus()
             })
         }, true);
-        this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); 
+        this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     },
     computed: {
         count() {
@@ -138,20 +134,23 @@ export default {
             }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes));
         }
-    } 
+    }
 }
 </script>
 
-<style>
+<style lang="less">
 html,
 body {
   margin: 0;
   padding: 0;
 }
 
-button{
-  margin: 0;
-  padding: 0;
+nav {
+    margin: 20px auto;
+    text-align: center;
+}
+
+.destroy {
   border: 0;
   background: none;
   font-size: 100%;
@@ -159,81 +158,45 @@ button{
   font-family: inherit;
   font-weight: inherit;
   color: inherit;
-  -webkit-appearance: none;
   appearance: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-font-smoothing: antialiased;
   font-smoothing: antialiased;
+  outline: none;
 }
 
 body {
   font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  line-height: 1.4em;
   background: #f5f5f5;
   color: #4d4d4d;
-  min-width: 230px;
-  max-width: 640px;
   margin: 0 auto;
-  -webkit-font-smoothing: antialiased;
-  -moz-font-smoothing: antialiased;
   font-smoothing: antialiased;
   font-weight: 300;
 }
 
-button,
-input[type="checkbox"] {
-  outline: none;
-}
 
-#app {
-  background: #fff;
-  margin: 200px 0 40px 0;
-  position: relative;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
-              0 25px 50px 0 rgba(0, 0, 0, 0.1);
-}
-
-#app input::-webkit-input-placeholder {
-  font-style: italic;
-  font-weight: 300;
-  color: #e6e6e6;
-}
-
-#app input::-moz-placeholder {
-  font-style: italic;
-  font-weight: 300;
-  color: #e6e6e6;
-}
-
-#app input::input-placeholder {
-  font-style: italic;
-  font-weight: 300;
-  color: #e6e6e6;
-}
-
-#app h1 {
-  position: absolute;
-  top: -130px;
-  width: 100%;
+.title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 90px;
   font-weight: 100;
   text-align: center;
   color: #000;
-  -webkit-text-rendering: optimizeLegibility;
-  -moz-text-rendering: optimizeLegibility;
   text-rendering: optimizeLegibility;
 }
+
 .send {
-    cursor: pointer;
-    float: left;
+  font-size: inherit;
+  margin: 20px;
+  padding: 0 40px;
+  background: #ccc;
+  outline: none;
+  cursor: pointer;
 }
 .total {
-    float: right;
     color: green;
 }
 .new-code,
 .edit {
-  position: relative;
   margin: 0;
   width: 100%;
   font-size: 24px;
@@ -247,22 +210,28 @@ input[type="checkbox"] {
   border: 1px solid #999;
   box-shadow: inset 0 -1px 5px 0 rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-font-smoothing: antialiased;
   font-smoothing: antialiased;
 }
 
 .new-code {
+  background: #fff;
   padding: 16px 16px 16px 60px;
   border: none;
-  background: rgba(0, 0, 0, 0.003);
+  /*background: rgba(0, 0, 0, 0.003);*/
   box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
+  &::-webkit-input-placeholder {
+    font-style: italic;
+    font-weight: 300;
+    color: #e6e6e6;
+  }
 }
 
-.main {
-  position: relative;
-  z-index: 2;
-  border-top: 1px solid #e6e6e6;
+main {
+    margin: 100px auto 40px auto;
+    min-width: 230px;
+    max-width: 640px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
+              0 25px 50px 0 rgba(0, 0, 0, 0.1);
 }
 
 .code-list {

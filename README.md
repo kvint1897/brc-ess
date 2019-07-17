@@ -1,4 +1,4 @@
-# kvint-ess
+# brc-ess
 
 ## Project setup
 ```
