@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <nav>
-        <router-link :to="{name: 'home'}">Сканирование</router-link> |
-        <router-link :to="{name: 'archive'}">Архив</router-link>
+        <router-link class="router-link" :to="{name: 'home'}">Сканирование</router-link>
+        <router-link class="router-link" :to="{name: 'archive'}">Архив</router-link>
     </nav>
     <transition name="slide-fade" mode="out-in">
         <router-view/>
@@ -11,9 +11,18 @@
 </template>
 
 <style>
+    .router-link {
+        border: 2px solid #777;
+        background: #ccc;
+        color: #000;
+        padding: 10px 100px;
+        text-decoration: none;
+        margin: 0 5px;
+    }
     .router-link-exact-active {
         text-decoration: none;
-        font-weight: bold;
+        background: #777;
+        color: #fff;
     }
     .slide-fade-enter-active {
       transition: all .2s ease;

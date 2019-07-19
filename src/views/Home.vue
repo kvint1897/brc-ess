@@ -38,12 +38,11 @@
 </template>
 
 <script>
-const STORAGE_KEY = 'excise-codes'
-const API_URL = 'http://web.kvint.md/brc/api.php'
+import { STORAGE_KEY, API_URL } from '@/const'
+import axios from 'axios'
+
 const START_CODE = 'Digit4'
 const END_CODE = 'Enter'
-
-import axios from 'axios'
 
 export default {
     name: 'home',
@@ -115,50 +114,50 @@ export default {
         send() {
             this.$refs.code.focus()
             if(this.count === 0) return
-            axios.post(API_URL, {
+            axios
+                .post(API_URL, {
                     action: 'addCodes',
                     codes: this.codes,
                     spec: this.spec
-                }, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-            )
-            .then(response => {
-                if (response.data.status == 'ok') {
-                    this.codes = []
-                    this.total = response.data.total
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
-                }
-            })
-            .catch(e => {
-                /* eslint-disable no-console */
-                console.log(e)
-            });
+                })
+                .then(response => {
+                    if (response.data.status == 'ok') {
+                        this.codes = []
+                        this.total = response.data.total
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
+                    }
+                })
+                .catch(e => {
+                    /* eslint-disable no-console */
+                    console.log(e)
+                })
         },
         addCode() {
-            var test = this.newCode.match(/[^-]{3}-([0-9]{11})[0-9]+?/);
-            this.newCode = '';
+            let test = this.newCode.match(/[^-]{3}-([0-9]{11})[0-9]+?/)
+            this.newCode = ''
             if (!test) {
-                return;
+                return
             }
-            var val = test[1].trim(), uniq = true;
-            for (var i = 0, l = this.codes.length; i < l; i++) {
+            let val = test[1].trim(), uniq = true
+            for (let i = 0, l = this.codes.length; i < l; i++) {
                 if (this.codes[i].title == val) {
-                    uniq = false;
-                    break;
+                    uniq = false
+                    break
                 }
             }
             if (!uniq) {
-                return;
+                return
             }
-            this.codes.unshift({title: val, id: this.codes.length});
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes));
+            this.codes.unshift({title: val, id: this.codes.length})
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
 
         },
         removeCode(code) {
-            this.codes.splice(this.codes.indexOf(code), 1);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes));
+            this.codes.splice(this.codes.indexOf(code), 1)
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
         },
         editCode(code) {
-            this.editedCode = code;
+            this.editedCode = code
 
         },
         doneEdit(code) {
@@ -170,7 +169,7 @@ export default {
             if (!code.title) {
                 this.removeCode(code);
             }
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
         }
     }
 }
@@ -181,6 +180,7 @@ html,
 body {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
