@@ -1,177 +1,183 @@
 <template>
-    <main>
-            <div class="spec">
-                <input class="textbox"
-                    placeholder="Введите № спецификации"
-                    v-model.trim.lazy="spec"
-                    :readonly="isWork"
-                    :class="{ readonly: isWork }"
-                    @dblclick="spec = ''"
-                    autofocus />
-            </div>
-            <div v-if="isWork" class="counters">
-                <button class="send" title="Отправить на сервер" @click="send">{{ count }}</button>
-                <div v-if="total>0" class="total">∑{{ total }}</div>
-            </div>
-            <div v-if="isWork">
-                <input ref="code" class="textbox"
-                       v-model="newCode"
-                       v-on:keyup.enter="addCode"
-                       placeholder="Просканируйте акцизную марку" />
-                <ul class="code-list">
-                    <li v-for="(code, index) in filteredCodes"
-                        :key="index"
-                        :class="{ completed: code.completed, editing: code == editedCode}">
-                        <div class="view">
-                            <label @dblclick="editCode(code)">{{ code.title }}</label>
-                            <button class="destroy" @click="removeCode(code)"></button>
-                        </div>
-                        <input class="edit" type="text"
-                            v-model="code.title"
-                            @blur="doneEdit(code)"
-                            @keyup.enter="doneEdit(code)" />
-                    </li>
-                </ul>
-                <ul class="code-list"></ul>
-            </div>
-    </main>
+  <main>
+    <div class="spec">
+      <input class="textbox"
+        placeholder="Введите № спецификации"
+        v-model.trim.lazy="spec"
+        :readonly="isWork"
+        :class="{ readonly: isWork }"
+        @dblclick="spec = ''"
+        autofocus />
+    </div>
+    <div v-if="isWork" class="counters">
+      <button class="send" title="Отправить на сервер" @click="send">{{ count }}</button>
+      <div v-if="total>0" class="total">∑{{ total }}</div>
+    </div>
+    <div v-if="isWork">
+      <input ref="code" class="textbox"
+        v-model="newCode"
+        v-on:keyup.enter="addCode"
+        placeholder="Просканируйте акцизную марку" />
+      <ul class="code-list">
+        <li v-for="(code, index) in filteredCodes"
+          :key="index"
+          :class="{ completed: code.completed, editing: code == editedCode}">
+          <div class="view">
+            <label @dblclick="editCode(code)">{{ code.title }}</label>
+            <button class="destroy" @click="removeCode(code)"></button>
+          </div>
+          <input class="edit" type="text"
+            v-model="code.title"
+            @blur="doneEdit(code)"
+            @keyup.enter="doneEdit(code)" />
+        </li>
+      </ul>
+      <ul class="code-list"></ul>
+    </div>
+  </main>
 </template>
 
 <script>
-import { STORAGE_KEY, API_URL } from '@/const'
 import axios from 'axios'
 
+const STORAGE_KEY = 'excise-codes'
 const START_CODE = 'Digit4'
 const END_CODE = 'Enter'
 
 export default {
-    name: 'home',
-    data() {
-        return {
-            newCode: '',
-            codes: [],
-            total: 0,
-            buffer: '',
-            isTrace: false,
-            spec: '',
-            editedCode: null,
-            visibility: 'all'
-        }
-    },
-    created() {
-        let self = this;
-        window.addEventListener('keydown', function (e) {
-            self.scanKeyboard(e);
+  name: 'home',
+  data() {
+    return {
+      newCode: '',
+      codes: [],
+      total: 0,
+      buffer: '',
+      isTrace: false,
+      spec: '',
+      editedCode: null,
+      visibility: 'all'
+    }
+  },
+  created() {
+    let self = this;
+    window.addEventListener('keydown', function (e) {
+      self.scanKeyboard(e);
             // self.$nextTick(() => {
             //     self.$refs.code.focus()
             // })
-        }, true);
-        this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          }, true);
+    this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  },
+  computed: {
+    isWork() {
+      return this.spec !== ''
     },
-    computed: {
-        isWork() {
-            return this.spec !== ''
-        },
-        count() {
-            return this.codes.length;
-        },
-        filteredCodes() {
-            if (this.visibility === 'all') {
-                return this.codes;
-            } else if (this.visibility === 'active') {
-                return this.codes.filter(function (code) {
-                    return !code.completed;
-                });
-            } else {
-                //completed
-                return this.codes.filter(function (code) {
-                    return code.completed;
-                })
-
-            }
-        }
-
+    count() {
+      return this.codes.length
     },
-    methods: {
-        scanKeyboard(e) {
-            if (!this.isWork) return
-            if(e.code === START_CODE && e.shiftKey && !this.isTrace) {
-                this.isTrace = true
-                return
-            }
-            if(!this.isTrace) return
-            if(e.code === END_CODE) {
-                this.newCode = this.buffer
-                this.addCode()
-                this.buffer = ''
-                this.isTrace = false
-                return
-
-            } else {
-                this.buffer += e.key
-            }
-        },
-        send() {
-            this.$refs.code.focus()
-            if(this.count === 0) return
-            axios
-                .post(API_URL, {
-                    action: 'addCodes',
-                    codes: this.codes,
-                    spec: this.spec
-                })
-                .then(response => {
-                    if (response.data.status == 'ok') {
-                        this.codes = []
-                        this.total = response.data.total
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
-                    }
-                })
-                .catch(e => {
-                    /* eslint-disable no-console */
-                    console.log(e)
-                })
-        },
-        addCode() {
-            let test = this.newCode.match(/[^-]{3}-([0-9]{11})[0-9]+?/)
-            this.newCode = ''
-            if (!test) {
-                return
-            }
-            let val = test[1].trim(), uniq = true
-            for (let i = 0, l = this.codes.length; i < l; i++) {
-                if (this.codes[i].title == val) {
-                    uniq = false
-                    break
-                }
-            }
-            if (!uniq) {
-                return
-            }
-            this.codes.unshift({title: val, id: this.codes.length})
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
-
-        },
-        removeCode(code) {
-            this.codes.splice(this.codes.indexOf(code), 1)
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
-        },
-        editCode(code) {
-            this.editedCode = code
-
-        },
-        doneEdit(code) {
-            if (!this.editedCode) {
-                return
-            }
-            this.editedCode = null;
-            code.title = code.title.trim();
-            if (!code.title) {
-                this.removeCode(code);
-            }
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
-        }
+    filteredCodes() {
+      if (this.visibility === 'all') {
+        return this.codes
+      } else if (this.visibility === 'active') {
+        return this.codes.filter(function (code) {
+          return !code.completed
+        })
+      } else {
+        //completed
+        return this.codes.filter(function (code) {
+          return code.completed;
+        })
+      }
     }
+  },
+  methods: {
+    scanKeyboard(e) {
+      if (!this.isWork) {
+        return
+      }
+      if(e.code === START_CODE && e.shiftKey && !this.isTrace) {
+        this.isTrace = true
+        return
+      }
+      if(!this.isTrace) {
+        return
+      }
+      if(e.code === END_CODE) {
+        this.newCode = this.buffer
+        this.addCode()
+        this.buffer = ''
+        this.isTrace = false
+        return
+      } else {
+        this.buffer += e.key
+      }
+    },
+    send() {
+      this.$refs.code.focus()
+      if(this.count === 0) {
+        return
+      }
+        axios
+          .post(this.$store.state.config.apiUrl, {
+            action: 'addCodes',
+            codes: this.codes,
+            spec: this.spec
+          })
+          .then(response => {
+            if (response.data.status == 'ok') {
+              this.codes = []
+              this.total = response.data.total
+              this.saveCodes()
+            }
+          })
+          .catch(e => {
+            /* eslint-disable no-console */
+            console.log(e)
+          })
+    },
+    addCode() {
+      let test = this.newCode.match(/[^-]{3}-([0-9]{11})[0-9]+?/)
+      this.newCode = ''
+      if (!test) {
+        return
+      }
+      let val = test[1].trim()
+      let uniq = true
+      for (let i = 0, l = this.codes.length; i < l; i++) {
+        if (this.codes[i].title == val) {
+          uniq = false
+          break
+        }
+      }
+      if (!uniq) {
+        return
+      }
+      this.codes.unshift({title: val, id: this.codes.length})
+      this.saveCodes()
+    },
+    removeCode(code) {
+      this.codes.splice(this.codes.indexOf(code), 1)
+      this.saveCodes()
+    },
+    editCode(code) {
+      this.editedCode = code
+
+    },
+    doneEdit(code) {
+      if (!this.editedCode) {
+        return
+      }
+      this.editedCode = null
+      code.title = code.title.trim()
+      if (!code.title) {
+        this.removeCode(code)
+      }
+      this.saveCodes()
+    },
+    saveCodes() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.codes))
+    }
+  }
 }
 </script>
 

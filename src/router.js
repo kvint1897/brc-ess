@@ -6,16 +6,15 @@ Vue.use(Router)
 
 export default new Router({
   routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: Home
-    }
-    ,
-    {
-      path: '/archive',
-      name: 'archive',
-      component: () => import(/* webpackChunkName: "archive" */ './views/Archive.vue')
-    }
+      {
+        path: '/',
+        name: 'home',
+        component: Home
+      },
+      {
+        path: '/archive',
+        name: 'archive',
+        component: () => import(/* webpackChunkName: "archive" */ './views/Archive.vue')
+      }
   ]
 })

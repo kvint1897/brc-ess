@@ -49,7 +49,6 @@
 
 <script>
     import Vue from 'vue'
-    import { API_URL, CODES_LENGTH, SERIES_LENGTH } from '@/const'
     import axios from 'axios'
     import Clipboard from 'v-clipboard'
     import CxltToastr from 'cxlt-vue2-toastr'
@@ -72,17 +71,17 @@
             }
         },
         created() {
-            axios
-                .post(API_URL, { action: 'getSpecList' })
-                .then(r => this.specs = r.data.specs)
-                .catch(e => /* eslint-disable no-console */console.log(e))
+          axios
+            .post(this.$store.state.config.apiUrl, { action: 'getSpecList' })
+            .then(r => this.specs = r.data.specs)
+            .catch(e => /* eslint-disable no-console */console.log(e))
         },
         computed: {
             paddedSpecCodes () {
-              return this.specCodes.map(i => this.pad(i, SERIES_LENGTH + CODES_LENGTH))
+              return this.specCodes.map(i => this.pad(i, this.$store.state.config.lengthSeries + this.$store.state.config.lengthCodes))
             },
             series () {
-                return [...new Set(this.paddedSpecCodes.map(i => i.substring(0, SERIES_LENGTH)))]
+                return [...new Set(this.paddedSpecCodes.map(i => i.substring(0, this.$store.state.config.lengthSeries)))]
             }
         },
         methods: {
@@ -97,7 +96,7 @@
             },
             getSpec(spec) {
                 axios
-                    .post(API_URL, { action: 'getSpecItems', spec: spec })
+                    .post(this.$store.state.config.apiUrl, { action: 'getSpecItems', spec: spec })
                     .then(r => this.specCodes = r.data.list)
                     .catch(e => /* eslint-disable no-console */console.log(e))
             },
