@@ -1,5 +1,6 @@
 <template>
   <main>
+    <scan-keyboard @keydown="filterKeyboard" />
     <div class="spec">
       <input class="textbox"
         placeholder="Введите № спецификации"
@@ -19,7 +20,7 @@
         v-on:keyup.enter="addCode"
         placeholder="Просканируйте акцизную марку" />
       <ul class="code-list">
-        <li v-for="(code, index) in filteredCodes"
+        <li v-for="(code, index) in codes"
           :key="index"
           :class="{ completed: code.completed, editing: code == editedCode}">
           <div class="view">
@@ -39,6 +40,7 @@
 
 <script>
 import axios from 'axios'
+import ScanKeyboard from '@/components/ScanKeyboard'
 
 const STORAGE_KEY = 'excise-codes'
 const START_CODE = 'Digit4'
@@ -46,6 +48,9 @@ const END_CODE = 'Enter'
 
 export default {
   name: 'home',
+  components: {
+    ScanKeyboard,
+  },
   data() {
     return {
       newCode: '',
@@ -55,18 +60,10 @@ export default {
       isTrace: false,
       spec: '',
       editedCode: null,
-      visibility: 'all'
     }
   },
   created() {
-    let self = this;
-    window.addEventListener('keydown', function (e) {
-      self.scanKeyboard(e);
-            // self.$nextTick(() => {
-            //     self.$refs.code.focus()
-            // })
-          }, true);
-    this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    this.codes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
   },
   computed: {
     isWork() {
@@ -74,24 +71,10 @@ export default {
     },
     count() {
       return this.codes.length
-    },
-    filteredCodes() {
-      if (this.visibility === 'all') {
-        return this.codes
-      } else if (this.visibility === 'active') {
-        return this.codes.filter(function (code) {
-          return !code.completed
-        })
-      } else {
-        //completed
-        return this.codes.filter(function (code) {
-          return code.completed;
-        })
-      }
     }
   },
   methods: {
-    scanKeyboard(e) {
+    filterKeyboard(e) {
       if (!this.isWork) {
         return
       }
@@ -117,23 +100,23 @@ export default {
       if(this.count === 0) {
         return
       }
-        axios
-          .post(this.$store.state.config.apiUrl, {
-            action: 'addCodes',
-            codes: this.codes,
-            spec: this.spec
-          })
-          .then(response => {
-            if (response.data.status == 'ok') {
-              this.codes = []
-              this.total = response.data.total
-              this.saveCodes()
-            }
-          })
-          .catch(e => {
-            /* eslint-disable no-console */
-            console.log(e)
-          })
+      axios
+        .post(this.$store.state.config.apiUrl, {
+          action: 'addCodes',
+          codes: this.codes,
+          spec: this.spec
+        })
+        .then(response => {
+          if (response.data.status == 'ok') {
+            this.codes = []
+            this.total = response.data.total
+            this.saveCodes()
+          }
+        })
+        .catch(e => {
+          /* eslint-disable no-console */
+          console.log(e)
+        })
     },
     addCode() {
       let test = this.newCode.match(/[^-]{3}-([0-9]{11})[0-9]+?/)
@@ -184,30 +167,30 @@ export default {
 <style lang="less">
 html,
 body {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    background: #f5f5f5;
-    color: #4d4d4d;
-    margin: 0 auto;
-    font-smoothing: antialiased;
-    font-weight: 300;
+  font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: #f5f5f5;
+  color: #4d4d4d;
+  margin: 0 auto;
+  font-smoothing: antialiased;
+  font-weight: 300;
 }
 
 nav {
-    margin: 20px auto;
-    text-align: center;
+  margin: 20px auto;
+  text-align: center;
 }
 
 main {
-    margin: 40px auto;
-    min-width: 230px;
-    max-width: 640px;
-    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
+  margin: 40px auto;
+  min-width: 230px;
+  max-width: 640px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
               0 25px 50px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -243,9 +226,11 @@ main {
   outline: none;
   cursor: pointer;
 }
+
 .total {
     color: green;
 }
+
 .textbox,
 .edit {
   margin: 0;
@@ -265,104 +250,102 @@ main {
 }
 
 .textbox {
-    padding: 16px;
-    border: none;
-    border-bottom: 2px solid #aaa;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
-    &::-webkit-input-placeholder {
-        font-style: italic;
-        font-weight: 300;
-        color: #e6e6e6;
-    }
+  padding: 16px;
+  border: none;
+  border-bottom: 2px solid #aaa;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
+  &::-webkit-input-placeholder {
+    font-style: italic;
+    font-weight: 300;
+    color: #e6e6e6;
+  }
 }
 
 .readonly {
-    background-color: #aaa;
-    text-align: center;
+  background-color: #aaa;
+  text-align: center;
 }
 
 .code-list {
-    margin: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  li {
+    position: relative;
+    font-size: 24px;
+    border-bottom: 1px solid #ededed;
+  }
+
+  li:last-child {
+    border-bottom: none;
+  }
+
+  li.editing {
+    border-bottom: none;
     padding: 0;
-    list-style: none;
-    li {
-        position: relative;
-        font-size: 24px;
-        border-bottom: 1px solid #ededed;
-    }
+  }
 
-    li:last-child {
-        border-bottom: none;
-    }
+  li.editing .edit {
+    display: block;
+    width: 506px;
+    padding: 13px 17px 12px 17px;
+    margin: 0 0 0 43px;
+  }
 
-    li.editing {
-        border-bottom: none;
-        padding: 0;
-    }
+  li.editing .view {
+    display: none;
+  }
+  li label {
+    white-space: pre-line;
+    word-break: break-all;
+    padding: 15px 60px 15px 15px;
+    margin-left: 45px;
+    display: block;
+    line-height: 1.2;
+    transition: color 0.4s;
+  }
 
-    li.editing .edit {
-        display: block;
-        width: 506px;
-        padding: 13px 17px 12px 17px;
-        margin: 0 0 0 43px;
-    }
+  li.completed label {
+    color: #d9d9d9;
+    text-decoration: line-through;
+  }
 
-    li.editing .view {
-        display: none;
-    }
-    li label {
-        white-space: pre-line;
-        word-break: break-all;
-        padding: 15px 60px 15px 15px;
-        margin-left: 45px;
-        display: block;
-        line-height: 1.2;
-        transition: color 0.4s;
-    }
+  li .destroy {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 10px;
+    bottom: 0;
+    width: 40px;
+    height: 40px;
+    margin: auto 0;
+    font-size: 30px;
+    color: #cc9a9a;
+    margin-bottom: 11px;
+    transition: color 0.2s ease-out;
+  }
 
-    li.completed label {
-        color: #d9d9d9;
-        text-decoration: line-through;
-    }
+  li .destroy:hover {
+    color: #af5b5e;
+  }
 
-    li .destroy {
-        display: none;
-        position: absolute;
-        top: 0;
-        right: 10px;
-        bottom: 0;
-        width: 40px;
-        height: 40px;
-        margin: auto 0;
-        font-size: 30px;
-        color: #cc9a9a;
-        margin-bottom: 11px;
-        transition: color 0.2s ease-out;
-    }
+  li .destroy:after {
+    content:  '\d7';
+  }
 
-    li .destroy:hover {
-        color: #af5b5e;
-    }
+  li:hover .destroy {
+    display: block;
+  }
 
-    li .destroy:after {
-        content:  '\d7';
-    }
+  li .edit {
+    display: none;
+  }
 
-    li:hover .destroy {
-        display: block;
-    }
-
-    li .edit {
-        display: none;
-    }
-
-    li.editing:last-child {
-        margin-bottom: -1px;
-    }
+  li.editing:last-child {
+    margin-bottom: -1px;
+  }
 }
-
-
 
 /*.code-list li .toggle {
   text-align: center;
@@ -384,58 +367,4 @@ main {
 .code-list li .toggle:checked:after {
   content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -18 100 135"><circle cx="50" cy="50" r="50" fill="none" stroke="%23bddad5" stroke-width="3"/><path fill="%235dc2af" d="M72 25L42 71 27 56l-4 4 20 20 34-52z"/></svg>');
 }*/
-
-.footer {
-  color: #777;
-  padding: 10px 15px;
-  height: 20px;
-  text-align: center;
-  border-top: 1px solid #e6e6e6;
-}
-
-.footer:before {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 50px;
-  overflow: hidden;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2),
-              0 8px 0 -3px #f6f6f6,
-              0 9px 1px -3px rgba(0, 0, 0, 0.2),
-              0 16px 0 -6px #f6f6f6,
-              0 17px 2px -6px rgba(0, 0, 0, 0.2);
-}
-
-.filters {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  position: absolute;
-  right: 0;
-  left: 0;
-}
-
-.filters li {
-  display: inline;
-}
-
-.filters li a {
-  color: inherit;
-  margin: 3px;
-  padding: 3px 7px;
-  text-decoration: none;
-  border: 1px solid transparent;
-  border-radius: 3px;
-}
-
-.filters li a.selected,
-.filters li a:hover {
-  border-color: rgba(175, 47, 47, 0.1);
-}
-
-.filters li a.selected {
-  border-color: rgba(175, 47, 47, 0.2);
-}
 </style>
