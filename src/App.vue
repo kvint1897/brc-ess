@@ -3,6 +3,7 @@
     <nav>
       <router-link class="router-link" :to="{name: 'home'}">Сканирование</router-link>
       <router-link class="router-link" :to="{name: 'archive'}">Архив</router-link>
+      <router-link class="router-link" :to="{name: 'help'}">Help</router-link>
       <modal-settings />
     </nav>
     <transition name="slide-fade" mode="out-in">
@@ -27,7 +28,7 @@ export default {
   border: 2px solid #777;
   background: #ccc;
   color: #000;
-  padding: 10px 100px;
+  padding: 10px 64px;
   text-decoration: none;
   margin: 0 5px;
 }

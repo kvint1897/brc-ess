@@ -15,6 +15,11 @@ export default new Router({
         path: '/archive',
         name: 'archive',
         component: () => import(/* webpackChunkName: "archive" */ './views/Archive.vue')
+      },
+      {
+        path: '/help',
+        name: 'help',
+        component: () => import(/* webpackChunkName: "help" */ './views/Help.vue')
       }
   ]
 })

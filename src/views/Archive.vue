@@ -1,153 +1,153 @@
 <template>
-    <main>
-        <div class="left">
-            <h1>Спецификации</h1>
-            <select class="speclist" size="10">
-                <option
-                    v-for="(spec, index) in specs"
-                    :key="index"
-                    @click="getSpec(spec)"
-                >
-                    {{ spec }}
-                </option>
-            </select>
-        </div>
-        <div v-if="specCodes.length > 0" class="right">
-            <div style="text-align: center;">
-                <table class="spec-codes" title="Click To Copy"
-                    v-clipboard="() => paddedSpecCodes.join('\n')"
-                    v-clipboard:success="clipboardSuccessHandler"
-                    v-clipboard:error="clipboardErrorHandler"
-                >
-                    <tr>
-                        <th>№</th>
-                        <th>Марка</th>
-                    </tr>
-                    <tr v-for="(item, index) in paddedSpecCodes"
-                        :key="index"
-                    >
-                        <td>{{ pad(index + 1, 4) }}</td>
-                        <td>{{ item }}</td>
-                    </tr>
-                </table>
-            </div>
-            <div class="fs-list">
-                <fieldset class="fs" title="Click To Copy"
-                    v-clipboard="() => filterBySerie(serie)"
-                    v-clipboard:success="clipboardSuccessHandler"
-                    v-clipboard:error="clipboardErrorHandler"
-                    v-for="serie in series"
-                    :key="serie"
-                >
-                    <legend>Серия #<b>{{ serie }}</b></legend>
-                    <div>{{ filterBySerie(serie) }}</div>
-                </fieldset>
-            </div>
-        </div>
-    </main>
+  <main>
+    <div class="left">
+      <h1>Спецификации</h1>
+      <select class="speclist" size="10">
+        <option
+            v-for="(spec, index) in specs"
+            :key="index"
+            @click="getSpec(spec)"
+        >
+          {{ spec }}
+        </option>
+      </select>
+    </div>
+    <div v-if="specCodes.length > 0" class="right">
+      <div style="text-align: center;">
+        <table class="spec-codes" title="Click To Copy"
+          v-clipboard="() => paddedSpecCodes.join('\n')"
+          v-clipboard:success="clipboardSuccessHandler"
+          v-clipboard:error="clipboardErrorHandler"
+        >
+            <tr>
+              <th>№</th>
+              <th>Марка</th>
+            </tr>
+            <tr v-for="(item, index) in paddedSpecCodes"
+              :key="index"
+            >
+              <td>{{ pad(index + 1, 4) }}</td>
+              <td>{{ item }}</td>
+            </tr>
+        </table>
+      </div>
+      <div class="fs-list">
+        <fieldset class="fs" title="Click To Copy"
+          v-clipboard="() => filterBySerie(serie)"
+          v-clipboard:success="clipboardSuccessHandler"
+          v-clipboard:error="clipboardErrorHandler"
+          v-for="serie in series"
+          :key="serie"
+        >
+          <legend>Серия #<b>{{ serie }}</b></legend>
+          <div>{{ filterBySerie(serie) }}</div>
+        </fieldset>
+      </div>
+    </div>
+  </main>
 </template>
 
 <script>
-    import Vue from 'vue'
-    import axios from 'axios'
-    import Clipboard from 'v-clipboard'
-    import CxltToastr from 'cxlt-vue2-toastr'
+import Vue from 'vue'
+import axios from 'axios'
+import Clipboard from 'v-clipboard'
+import CxltToastr from 'cxlt-vue2-toastr'
 
-    Vue.use(Clipboard)
+Vue.use(Clipboard)
 
-    var toastrConfigs = {
-        position: 'top right',
-        showDuration: 2000,
-        progressBar: true,
+var toastrConfigs = {
+  position: 'top right',
+  showDuration: 2000,
+  progressBar: true,
+}
+Vue.use(CxltToastr, toastrConfigs)
+
+export default {
+  name: 'archive',
+  data () {
+    return {
+      specs: [],
+      specCodes: [],
     }
-    Vue.use(CxltToastr, toastrConfigs)
-
-    export default {
-        name: 'archive',
-        data () {
-            return {
-                specs: [],
-                specCodes: [],
-            }
-        },
-        created() {
-          axios
-            .post(this.$store.state.config.apiUrl, { action: 'getSpecList' })
-            .then(r => this.specs = r.data.specs)
-            .catch(e => /* eslint-disable no-console */console.log(e))
-        },
-        computed: {
-            paddedSpecCodes () {
-              return this.specCodes.map(i => this.pad(i, this.$store.state.config.lengthSeries + this.$store.state.config.lengthCodes))
-            },
-            series () {
-                return [...new Set(this.paddedSpecCodes.map(i => i.substring(0, this.$store.state.config.lengthSeries)))]
-            }
-        },
-        methods: {
-            filterBySerie (serie) {
-                let list = this.paddedSpecCodes.reduce((list, i) => {
-                    if(i.startsWith(serie)) {
-                        list.push(+i.substring(serie.length))
-                    }
-                    return list
-                }, [])
-                return this.compressArr(list)
-            },
-            getSpec(spec) {
-                axios
-                    .post(this.$store.state.config.apiUrl, { action: 'getSpecItems', spec: spec })
-                    .then(r => this.specCodes = r.data.list)
-                    .catch(e => /* eslint-disable no-console */console.log(e))
-            },
-            clipboardSuccessHandler (/*{ value, event }*/) {
-                this.$toast.success({
-                    title:'Success',
-                    message:'Copied'
-                })
-            },
-            clipboardErrorHandler (/*{ value, event }*/) {
-                this.$toast.success({
-                    title:'Error',
-                    message:'Couldn\'t copy'
-                })
-            },
-            pad(num, size) {
-                let s = num+"";
-                while (s.length < size) s = "0" + s;
-                return s;
-            },
-            compressArr(arr) {
-                var start = arr[0];
-                var stop = start;
-                var arrLength = arr.length;
-                var result = '';
-
-                for (var i = 1; i < arrLength; i++) {
-                    if (arr[i] === stop+1) {
-                        stop = arr[i];
-                    } else {
-                        if (start === stop) {
-                            result += `(${start})`;
-                        } else {
-                            result += `(${start}-${stop})`;
-                        }
-                        // reset the start and stop pointers
-                        start = arr[i];
-                        stop = start;
-                    }
-                }
-
-                if (start === stop) {
-                    result += `(${start})`;
-                } else {
-                    result += `(${start}-${stop})`;
-                }
-
-                return result;
-            }
+  },
+  created() {
+    axios
+      .post(this.$store.state.config.apiUrl, { action: 'getSpecList' })
+      .then(r => this.specs = r.data.specs)
+      .catch(e => /* eslint-disable no-console */console.log(e))
+  },
+  computed: {
+    paddedSpecCodes () {
+      return this.specCodes.map(i => this.pad(i, this.$store.state.config.lengthSeries + this.$store.state.config.lengthCodes))
+    },
+    series () {
+      return [...new Set(this.paddedSpecCodes.map(i => i.substring(0, this.$store.state.config.lengthSeries)))]
+    }
+  },
+  methods: {
+    filterBySerie (serie) {
+      let list = this.paddedSpecCodes.reduce((list, i) => {
+        if(i.startsWith(serie)) {
+          list.push(+i.substring(serie.length))
         }
+        return list
+      }, [])
+      return this.compressArr(list)
+    },
+    getSpec(spec) {
+      axios
+        .post(this.$store.state.config.apiUrl, { action: 'getSpecItems', spec: spec })
+        .then(r => this.specCodes = r.data.list)
+        .catch(e => /* eslint-disable no-console */console.log(e))
+    },
+    clipboardSuccessHandler (/*{ value, event }*/) {
+      this.$toast.success({
+        title:'Success',
+        message:'Copied'
+      })
+    },
+    clipboardErrorHandler (/*{ value, event }*/) {
+      this.$toast.success({
+        title:'Error',
+        message:'Couldn\'t copy'
+      })
+    },
+    pad(num, size) {
+      let s = num+"";
+      while (s.length < size) s = "0" + s;
+      return s;
+    },
+    compressArr(arr) {
+      var start = arr[0];
+      var stop = start;
+      var arrLength = arr.length;
+      var result = '';
+
+      for (var i = 1; i < arrLength; i++) {
+        if (arr[i] === stop+1) {
+          stop = arr[i];
+        } else {
+          if (start === stop) {
+            result += `(${start})`;
+          } else {
+            result += `(${start}-${stop})`;
+          }
+          // reset the start and stop pointers
+          start = arr[i];
+          stop = start;
+        }
+      }
+
+      if (start === stop) {
+        result += `(${start})`;
+      } else {
+        result += `(${start}-${stop})`;
+      }
+
+      return result;
     }
+  }
+}
 </script>
 
 <style lang="less" scoped>
